@@ -120,7 +120,6 @@ uberzahl ECsystem::pointCompress(ECpoint e) {
 	//This function is fully defined.
 	uberzahl compressedPoint = e.x.getValue();
 	compressedPoint = compressedPoint<<1;
-	
 	if(e.infinityPoint) {
 		cout<<"Point cannot be compressed as its INF-POINT"<<flush;
 		abort();
@@ -129,7 +128,7 @@ uberzahl ECsystem::pointCompress(ECpoint e) {
 		if (e.y.getValue()%2 == 1)
 			compressedPoint = compressedPoint + 1;
 		}
-		//cout<<"For point  "<<e<<"  Compressed point is <<"<<compressedPoint<<"\n";
+		// cout<<"For point  "<<e<<"  Compressed point is "<<compressedPoint<<"\n";
 		return compressedPoint;
 
 }
@@ -137,25 +136,34 @@ uberzahl ECsystem::pointCompress(ECpoint e) {
 ECpoint ECsystem::pointDecompress(uberzahl compressedPoint){
 	//Implement the delta function for decompressing the compressed point
 
-	// assert(0);
-	return ECpoint(true);
+	Zp x = compressedPoint >> 1;
+	Zp z = this->power(x,3) + Zp(A) * x + Zp(B);
+	Zp y = this->power(z,(PRIME+"1")/"4");
+	if( (y.getValue() % 2) != (compressedPoint % 2) )
+		y = Zp(PRIME)-y;
+	return ECpoint(x,y);
 }
 
 
 pair<pair<Zp,Zp>,uberzahl> ECsystem::encrypt(ECpoint publicKey, uberzahl privateKey,Zp plaintext0,Zp plaintext1){
 	// You must implement elliptic curve encryption
 	//  Do not generate a random key. Use the private key that is passed from the main function
-
-	// assert(0);
-	return make_pair(make_pair(0,0),0);
+	ECpoint Q = privateKey * G;
+	ECpoint key = privateKey * this->publicKey;
+	Zp ciphertext0 = plaintext0 * key.x;
+	Zp ciphertext1 = plaintext1 * key.y;
+	uberzahl ciphertext2 = this->pointCompress(Q);
+	return make_pair(make_pair(ciphertext0,ciphertext1),ciphertext2);
 }
 
 
 pair<Zp,Zp> ECsystem::decrypt(pair<pair<Zp,Zp>, uberzahl> ciphertext){
 	// Implement EC Decryption
 
-	// assert(0);
-	return make_pair(0,0);
+	ECpoint R = this->privateKey * this->pointDecompress(ciphertext.second);
+	Zp plaintext0 = ciphertext.first.first * R.x.inverse();
+	Zp plaintext1 = ciphertext.first.second * R.y.inverse();
+	return make_pair(plaintext0,plaintext1);
 }
 
 
@@ -172,34 +180,33 @@ pair<Zp,Zp> ECsystem::decrypt(pair<pair<Zp,Zp>, uberzahl> ciphertext){
 
 int main(void)
 {
+	ECsystem ec;
+	unsigned long incrementVal;
+	pair <ECpoint, uberzahl> keys = ec.generateKeys();
+	
+	Zp plaintext0(MESSAGE0);
+	Zp plaintext1(MESSAGE1);
+	ECpoint publicKey = keys.first;
+	cout<<"Public key is: "<<publicKey<<"\n";
+	
+	cout<<"Enter offset value for sender's private key"<<endl;
+	cin>>incrementVal;
+	uberzahl privateKey = XB + incrementVal;
+	
+	pair<pair<Zp,Zp>, uberzahl> ciphertext = ec.encrypt(publicKey, privateKey, plaintext0,plaintext1);
+	cout<<"Encrypted ciphertext is: ("<<ciphertext.first.first<<", "<<ciphertext.first.second<<", "<<ciphertext.second<<")\n";
+	pair<Zp,Zp> plaintext_out = ec.decrypt(ciphertext);
+	
+	cout << "Original plaintext is: (" << plaintext0 << ", " << plaintext1 << ")\n";
+	cout << "Decrypted plaintext: (" << plaintext_out.first << ", " << plaintext_out.second << ")\n";
 
-	// ECsystem ec;
-	// unsigned long incrementVal;
-	// pair <ECpoint, uberzahl> keys = ec.generateKeys();
-	
-	// Zp plaintext0(MESSAGE0);
-	// Zp plaintext1(MESSAGE1);
-	// ECpoint publicKey = keys.first;
-	// cout<<"Public key is: "<<publicKey<<"\n";
-	
-	// cout<<"Enter offset value for sender's private key"<<endl;
-	// cin>>incrementVal;
-	// uberzahl privateKey = XB + incrementVal;
-	
-	// pair<pair<Zp,Zp>, uberzahl> ciphertext = ec.encrypt(publicKey, privateKey, plaintext0,plaintext1);
-	// cout<<"Encrypted ciphertext is: ("<<ciphertext.first.first<<", "<<ciphertext.first.second<<", "<<ciphertext.second<<")\n";
-	// pair<Zp,Zp> plaintext_out = ec.decrypt(ciphertext);
-	
-	// cout << "Original plaintext is: (" << plaintext0 << ", " << plaintext1 << ")\n";
-	// cout << "Decrypted plaintext: (" << plaintext_out.first << ", " << plaintext_out.second << ")\n";
 
-
-	// if(plaintext0 == plaintext_out.first && plaintext1 == plaintext_out.second)
-	// 	cout << "Correct!" << endl;
-	// else
-	// 	cout << "Plaintext different from original plaintext." << endl;
+	if(plaintext0 == plaintext_out.first && plaintext1 == plaintext_out.second)
+		cout << "Correct!" << endl;
+	else
+		cout << "Plaintext different from original plaintext." << endl;
 			
-	// return 1;
+	return 1;
 
 }
 

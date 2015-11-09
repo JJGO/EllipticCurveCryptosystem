@@ -118,6 +118,8 @@ class ECsystem{
 		pair <pair<Zp,Zp>,uberzahl> encrypt(ECpoint publicKey, uberzahl privateKey, Zp plaintext0, Zp plaintext1);
 		pair <Zp,Zp> decrypt(pair<pair<Zp,Zp>,uberzahl> cm);
 
+		uberzahl public_pointCompress(ECpoint e) {return public_pointCompress(e); };
+		ECpoint public_pointDecompress(uberzahl compressedPoint) {return public_pointDecompress(compressedPoint); };
 };
 
 #endif
