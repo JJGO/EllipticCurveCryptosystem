@@ -8,6 +8,7 @@ CC = g++-5.2.0
 default:
 	g++-5.2.0 ec.cpp ec_ops.cpp uberzahl.cpp -o ${SRC}
 run:
+	g++-5.2.0 ec.cpp ec_ops.cpp uberzahl.cpp -o ${SRC}
 	./${SRC}
 clean:
 	rm ${SRC}

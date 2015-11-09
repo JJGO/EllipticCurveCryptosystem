@@ -53,7 +53,11 @@ ECpoint operator * (const uberzahl &a, const ECpoint &b) {
 	return b.repeatSum(b, a);
 }
 
-
+ECpoint ECpoint::operator - () const {
+	if(this->infinityPoint)
+		return ECpoint(true);
+	return ECpoint(this->x,-this->y);
+}
 
 
 ostream& operator << (ostream& output, const ECpoint& a){
@@ -68,11 +72,11 @@ ostream& operator << (ostream& output, const ECpoint& a){
 
 pair <ECpoint, uberzahl> ECsystem::generateKeys(){
 	//Generate the private key and public key for the user to whom message is sent
-	//Returns only the "P" value of public key and "a" value of private key, 
+	//Returns only the "P" value of public key and "a" value of private key,
 	//as other parameters are globally defined
 	
 	privateKey = XA;
-	publicKey = privateKey*G; 
+	publicKey = privateKey*G;
 	return pair <ECpoint, uberzahl> (publicKey, privateKey);
 }
 

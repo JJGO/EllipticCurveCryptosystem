@@ -48,15 +48,15 @@ class Zp{
 	
 	public:
 	Zp(){}
-	Zp(const uberzahl v){ 
-		value = v; 
+	Zp(const uberzahl v){
+		value = v;
 		if(value >= PRIME || value < "0")
-			value = value % PRIME; 
+			value = value % PRIME;
 	}
-	Zp(const int v){ 
-		value = v; 
+	Zp(const int v){
+		value = v;
 		if(value>=PRIME || value < "0")
-			value = value % PRIME; 
+			value = value % PRIME;
 	}
 	uberzahl getValue() const { return value; }
 
@@ -69,7 +69,7 @@ class Zp{
 };
 
 
-/* 
+/*
  * class ECpoint: A point on an elliptic curve
  */
 class ECpoint{
@@ -90,6 +90,8 @@ class ECpoint{
 	ECpoint repeatSum(ECpoint p, uberzahl v) const;
 	bool operator == (const ECpoint &a) const;
 	ECpoint operator + (const ECpoint &a) const;
+	ECpoint operator - (const ECpoint &a) const;
+	ECpoint operator - () const; //unary negation
 };
 ECpoint operator * (const uberzahl &a, const ECpoint &b);
 
@@ -110,11 +112,12 @@ class ECsystem{
 		ECsystem(){ G = ECpoint(GX, GY);}
 		ECpoint getPublicKey(){ return publicKey;}
 		
-		pair <ECpoint, uberzahl> generateKeys();		
+		pair <ECpoint, uberzahl> generateKeys();
 
 		
 		pair <pair<Zp,Zp>,uberzahl> encrypt(ECpoint publicKey, uberzahl privateKey, Zp plaintext0, Zp plaintext1);
 		pair <Zp,Zp> decrypt(pair<pair<Zp,Zp>,uberzahl> cm);
+
 };
 
 #endif
