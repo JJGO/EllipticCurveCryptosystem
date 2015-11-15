@@ -14,7 +14,7 @@ class uberzahl {
     uberzahl ( void );
     ~uberzahl ( void );
     uberzahl ( const char*, int base=10 );
-    uberzahl ( largeType );
+    uberzahl ( int );
     uberzahl ( const uberzahl& );
 //    uberzahl( const mpz_class& );
     const uberzahl& operator = ( const uberzahl& );

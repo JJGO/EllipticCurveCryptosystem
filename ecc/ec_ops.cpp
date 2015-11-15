@@ -55,7 +55,7 @@ ECpoint operator * (const uberzahl &a, const ECpoint &b) {
 
 ECpoint ECpoint::operator - () const {
 	if(this->infinityPoint)
-		return ECpoint(true);
+		return *this;
 	return ECpoint(this->x,-this->y);
 }
 

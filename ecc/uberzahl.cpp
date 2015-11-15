@@ -18,13 +18,13 @@ uberzahl::uberzahl ( void )
   convert_to_numeric();
 }
 
-uberzahl::uberzahl ( largeType number ){
+uberzahl::uberzahl ( int number ){
   positive = true;
-  value_vector.push_back(number);
-  while ( number != 0 ){
-    number = number >> maxBits;
-    value_vector.push_back(number);
+  if(number<0) {
+    positive = false;
+    number = -number;
   }
+  value_vector.push_back(number);
 }
 
 uberzahl::uberzahl ( const char* number ,int base){
@@ -272,7 +272,9 @@ uberzahl uberzahl::operator / ( const uberzahl& number ) const
 {
 	uberzahl x = *this;
 	uberzahl y = number;
-	uberzahl q = 0ULL;
+	uberzahl q = "0";
+    bool newpositive = positive == number.positive;
+	x.positive = y.positive = true;
 	assert( y != "0" ); // y can not be 0 in our division algorithm
 	if ( x < y ) return q; // return 0 since y > x
 	x.clean_bits();
@@ -292,7 +294,7 @@ uberzahl uberzahl::operator / ( const uberzahl& number ) const
 			q = q+1;
 		}
 	}
-    q.positive = positive == number.positive;
+	q.positive = newpositive;
 	return q;
 
 }
@@ -347,14 +349,17 @@ std::string uberzahl::convert_to_string ( void ) const
 
   uberzahl temp = *this;
   std::string reversed = "";
-  while(temp>"0") {
-    reversed+=temp%10+'0';
-    temp=temp/10;
-  }
-
   std::string retval = "";
   if(!positive)
     retval = "-";
+  while(temp!="0") {
+    if(positive)
+      reversed+=temp%10+'0';
+    else
+      reversed+=(-temp)%10+'0';
+    temp=temp/10;
+  }
+
   for(int i=reversed.size()-1;i>=0;i--)
     retval+=reversed[i];
 

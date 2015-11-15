@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <utility>
+#include <ctime>
 // #include <cassert>
 #include "ec_ops.h"
 using namespace std;
@@ -180,6 +181,11 @@ pair<Zp,Zp> ECsystem::decrypt(pair<pair<Zp,Zp>, uberzahl> ciphertext){
 
 int main(void)
 {
+	clock_t begin, end;
+	double time_spent;
+
+	begin = clock();
+
 	ECsystem ec;
 	unsigned long incrementVal;
 	pair <ECpoint, uberzahl> keys = ec.generateKeys();
@@ -205,8 +211,12 @@ int main(void)
 		cout << "Correct!" << endl;
 	else
 		cout << "Plaintext different from original plaintext." << endl;
-			
-	return 1;
+	
+	end = clock();
+	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+	cout << "\nTIME :" << time_spent << "seconds" << endl;
+
+	return 0;
 
 }
 
