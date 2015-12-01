@@ -1,3 +1,6 @@
+// Jose Javier Gonzalez - jjgo
+// Martin Card - mtncard
+
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
