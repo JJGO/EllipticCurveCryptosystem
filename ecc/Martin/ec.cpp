@@ -36,11 +36,11 @@ Zp Zp::inverse() const{
 
 		temp = s;
 		s = ss;
-		ss = temp - ss * q;
+		ss = temp - ss*q;
 
 		temp = t;
 		t = tt;
-		tt = temp - tt * q;
+		tt = temp - tt*q;
 	}
 		
 	return Zp(s);
@@ -77,20 +77,23 @@ ECpoint ECpoint::operator + (const ECpoint &a) const {
 	return ECpoint(xR,-yR);
 }
 
+
 ECpoint ECpoint::repeatSum(ECpoint p, uberzahl v) const {
 	//Find the sum of p+p+...+p (vtimes)
 	if(p.infinityPoint)
 		return p;
 	else if( v < "0")
 		return p.repeatSum(-p,-v);
+	else if( v == "0")
+		return ECpoint(true);
 	else
 	{
 		ECpoint r(true);
 		while( v > "0" )
 		{
 			if( (v & "1") == "1")
-				r =  r + p;
-			p = p + p;
+				r =  r+p;
+			p = p+p;
 			v = v >> 1;
 		}
 		return r;
@@ -101,11 +104,6 @@ ECpoint ECpoint::repeatSum(ECpoint p, uberzahl v) const {
 
 Zp ECsystem::power(Zp val, uberzahl pow) {
 	//Find the product of val*val*...*val (pow times)
-	if( val == Zp(0) )
-		return val;
-	else if( pow < "0")
-		return this->power(val.inverse(), -pow);
-
 	Zp c = Zp(1);
 	while( pow > "0" )
 	{
@@ -114,7 +112,7 @@ Zp ECsystem::power(Zp val, uberzahl pow) {
 		val = val*val;
 		pow = pow >> 1;
 	}
-	
+	// assert(0);
 	return c;
 }
 
@@ -159,6 +157,7 @@ pair<pair<Zp,Zp>,uberzahl> ECsystem::encrypt(ECpoint publicKey, uberzahl private
 	Zp ciphertext0 = plaintext0 * key.x;
 	Zp ciphertext1 = plaintext1 * key.y;
 	uberzahl ciphertext2 = this->pointCompress(Q);
+
 	return make_pair(make_pair(ciphertext0,ciphertext1),ciphertext2);
 }
 
@@ -183,8 +182,7 @@ pair<Zp,Zp> ECsystem::decrypt(pair<pair<Zp,Zp>, uberzahl> ciphertext){
  *       evaluate the correctness of your program.
  */
 
-
-int main(void)
+void run(uberzahl messagePart1, uberzahl& messagePart2, unsigned long incrementVal)
 {
 	clock_t begin, end;
 	double time_spent;
@@ -192,16 +190,16 @@ int main(void)
 	begin = clock();
 
 	ECsystem ec;
-	unsigned long incrementVal;
+
 	pair <ECpoint, uberzahl> keys = ec.generateKeys();
 	
-	Zp plaintext0(MESSAGE0);
-	Zp plaintext1(MESSAGE1);
+	Zp plaintext0(/*MESSAGE0*/messagePart1);
+	Zp plaintext1(/*MESSAGE1*/messagePart2);
 	ECpoint publicKey = keys.first;
 	cout<<"Public key is: "<<publicKey<<"\n";
 	
 	cout<<"Enter offset value for sender's private key"<<endl;
-	cin>>incrementVal;
+
 	uberzahl privateKey = XB + incrementVal;
 	
 	pair<pair<Zp,Zp>, uberzahl> ciphertext = ec.encrypt(publicKey, privateKey, plaintext0,plaintext1);
@@ -219,12 +217,102 @@ int main(void)
 	
 	end = clock();
 	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-	cout << "\nTIME :" << time_spent << " seconds" << endl;
-
-	return 0;
-
+	cout << "\nTIME :" << time_spent << "seconds" << endl;
 }
 
+int main(void) {
+
+  //run with large parts of message.
+  {
+    uberzahl part1 = "5192194303766841028825845";
+    uberzahl part2 = "5325995014746560938717301";
+    run(part1, part2, 3);
+  }
+
+  //run with small message part one, large part two.
+  {
+    uberzahl part1 = "5";
+    uberzahl part2 = "5325995014746560938717301";
+    run(part1, part2, 34);
+  }
+
+  //run with large message part one, small part two.
+  {
+    uberzahl part1 = "8324573705019449783825930518";
+    uberzahl part2 = "1";
+    run(part1, part2, 5);
+  }
+
+  //run with small parts of message.
+  {
+    uberzahl part1 = "3";
+    uberzahl part2 = "2";
+    run(part1, part2, 75);
+  }
+
+  //run with negative part 1.
+  {
+    uberzahl part1 = "-45364847";
+    uberzahl part2 = "99879283";
+    run(part1, part2, 9);
+  }
+
+  //run with negative part 2.
+  {
+    uberzahl part1 = "1897490";
+    uberzahl part2 = "-94874373";
+    run(part1, part2, 2);
+  }
+
+  //both parts negative.
+  {
+    uberzahl part1 = "-8372526374";
+    uberzahl part2 = "-2439723";
+    run(part1, part2, 9);
+  }
+
+  //run with negative offset.
+  {
+    uberzahl part1 = "45364847";
+    uberzahl part2 = "99879283";
+    run(part1, part2, -9);
+  }
+
+  // Addition/subtraction.
+  {
+    Zp x1 = 49;
+    Zp x2 = 50;
+    Zp y1 = 234532910;
+    Zp y2 = 3847762;
+    
+    ECpoint point1(x1, y1);
+    ECpoint point2(point1 + (-point1));
+    cout << point1 << endl;
+    cout << point1 + (-point2) << endl;
+    cout << point1 - point2 << endl;
+  }
+
+  // Same points.
+  {
+    ECpoint point1(38470, 0);
+    ECpoint point2(38470, 0);
+    cout << point1 + point2 << endl;
+  }
+
+  // Repeat sum.
+  {
+    ECpoint point1(true);
+    ECpoint point2(847,4943);
+    uberzahl power1("0");
+    uberzahl power2("-4");
+
+    cout << point1.repeatSum(point1, power1) << endl;
+    cout << point1.repeatSum(point2, power2) << endl;
+    cout << point1.repeatSum(point2, power1) << endl;
+  }
+  
+  return 0;
+}
 
 ECpoint operator - (const ECpoint &a, const ECpoint &b)
 {
@@ -239,5 +327,3 @@ ECpoint operator - (const ECpoint &a)
 	return ECpoint(a.x,-a.y);
 
 }
-
-

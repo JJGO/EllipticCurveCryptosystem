@@ -3,9 +3,16 @@
 #include <cstdlib>
 #include <utility>
 #include <ctime>
-// #include <cassert>
+#include <cassert>
 #include "ec_ops.h"
+#include <vector>
+
 using namespace std;
+
+std::vector<int> getPrimes(int n);
+void test_inverse();
+void test_power();
+void test_pointadd();
 
 ECpoint operator - (const ECpoint &a, const ECpoint &b); //substraction
 ECpoint operator - (const ECpoint &a);  //unary negation
@@ -16,8 +23,9 @@ Zp Zp::inverse() const{
 	uberzahl a = this->value;
 	if(a == "0")
 	{
-		cout<<"Zero has no inverse in Zp"<<flush;
-		abort();
+		cout<<"Zero has no inverse in Zp\n"<<flush;
+		// abort();
+		return Zp(0);
 	}
 	uberzahl b = PRIME;
 	uberzahl  s("1");
@@ -191,38 +199,117 @@ int main(void)
 
 	begin = clock();
 
-	ECsystem ec;
-	unsigned long incrementVal;
-	pair <ECpoint, uberzahl> keys = ec.generateKeys();
-	
-	Zp plaintext0(MESSAGE0);
-	Zp plaintext1(MESSAGE1);
-	ECpoint publicKey = keys.first;
-	cout<<"Public key is: "<<publicKey<<"\n";
-	
-	cout<<"Enter offset value for sender's private key"<<endl;
-	cin>>incrementVal;
-	uberzahl privateKey = XB + incrementVal;
-	
-	pair<pair<Zp,Zp>, uberzahl> ciphertext = ec.encrypt(publicKey, privateKey, plaintext0,plaintext1);
-	cout<<"Encrypted ciphertext is: ("<<ciphertext.first.first<<", "<<ciphertext.first.second<<", "<<ciphertext.second<<")\n";
-	pair<Zp,Zp> plaintext_out = ec.decrypt(ciphertext);
-	
-	cout << "Original plaintext is: (" << plaintext0 << ", " << plaintext1 << ")\n";
-	cout << "Decrypted plaintext: (" << plaintext_out.first << ", " << plaintext_out.second << ")\n";
-
-
-	if(plaintext0 == plaintext_out.first && plaintext1 == plaintext_out.second)
-		cout << "Correct!" << endl;
-	else
-		cout << "Plaintext different from original plaintext." << endl;
+	// std::vector<int> primes;
+	// primes = getPrimes(10000);
+	// cout << primes[primes.size()-1] << endl;
+	test_inverse();
+	test_power();
+	test_pointadd();
 	
 	end = clock();
 	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-	cout << "\nTIME :" << time_spent << " seconds" << endl;
+	cout << "\nTIME :" << time_spent << "seconds" << endl;
 
 	return 0;
 
+}
+
+std::vector<int> getPrimes(int n)
+{
+    std::vector<int> primes;
+    primes.push_back(2);
+    for(int i=3; i < n; i++)
+    {
+        bool prime=true;
+        for(int j=0;j<primes.size() && primes[j]*primes[j] <= i;j++)
+        {
+            if(i % primes[j] == 0)
+            {
+                prime=false;
+                break;
+            }
+        }
+        if(prime)
+        {
+            primes.push_back(i);
+            // cout << i << " ";
+        }
+    }
+
+    return primes;
+}
+
+void test_inverse()
+{
+	for (uberzahl i("1") ; i <= PRIME;)
+	{
+		Zp x(i);
+		Zp y = x.inverse();
+		cout << x << " " << y << " " << x*y << endl;
+		assert(x*y == Zp(1) || x == Zp(0));
+		i = i+1;
+	}
+}
+
+void test_power()
+{
+	ECsystem ec;
+	Zp x("0");
+	Zp y = ec.power(x,uberzahl("345"));
+	assert(y == Zp(0));
+
+	for (uberzahl i("1") ; i < PRIME;)
+	{
+		Zp x(i);
+		y = ec.power(x,PRIME-"1");
+		assert(y == Zp(1));
+		y = ec.power(x,-(PRIME-"1"));
+		cout << x << " " << y << endl;
+		assert(y == Zp(1));
+		i = i+"1";
+	}
+}
+
+void test_pointadd()
+{
+	ECpoint I(true);
+	ECpoint X(Zp(0),Zp(1));
+	ECpoint Y(Zp(55),Zp(195));
+	assert(I+I == I);
+	assert(X+I == X);
+	assert(I+X == X);
+	assert(X+X == ECpoint(Zp(152),Zp(227)));
+	assert(X+Y == ECpoint(Zp(321),Zp(239)));
+	
+	ECpoint G(Zp(3),Zp(387));
+	X = ECpoint(true);
+	for (uberzahl i("0") ; i <= ORDER;)
+	{
+		Y = i * G;
+		cout << X << " " << Y << endl;
+		assert(X == Y);
+		X = X + G;
+		i = i+"1";
+	}
+	X = ECpoint(true);
+	for (uberzahl i("0") ; i <= ORDER;)
+	{
+		Y = (-i) * G;
+		cout << X << " " << Y << endl;
+		assert(X == Y);
+		X = X - G;
+		i = i+"1";
+	}
+	ECsystem ec;
+	for (uberzahl i("1") ; i <= ORDER;)
+	{
+		Y = i * G;
+		uberzahl z = ec.pointCompress(Y);
+		X = ec.pointDecompress(z);
+		cout << Y << " " << z << endl;
+		assert(X == Y);
+		i = i+"1";
+	}
 }
 
 
@@ -239,5 +326,4 @@ ECpoint operator - (const ECpoint &a)
 	return ECpoint(a.x,-a.y);
 
 }
-
 

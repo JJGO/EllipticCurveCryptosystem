@@ -1,0 +1,334 @@
+        -:    0:Source:ec.cpp
+        -:    0:Graph:ec.gcno
+        -:    0:Data:ec.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include <iostream>
+        -:    2:#include <cstdio>
+        -:    3:#include <cstdlib>
+        -:    4:#include <utility>
+        -:    5:#include <ctime>
+        -:    6:// #include <cassert>
+        -:    7:#include "ec_ops.h"
+        -:    8:using namespace std;
+        -:    9:
+        -:   10:ECpoint operator - (const ECpoint &a, const ECpoint &b); //substraction
+        -:   11:ECpoint operator - (const ECpoint &a);  //unary negation
+        -:   12:
+    12073:   13:Zp Zp::inverse() const{
+        -:   14:	// Implement the Extended Euclidean Algorithm to return the inverse mod PRIME
+        -:   15:
+    24146:   16:	uberzahl a = this->value;
+    12073:   17:	if(a == "0")
+        -:   18:	{
+    #####:   19:		cout<<"Zero has no inverse in Zp"<<flush;
+    #####:   20:		abort();
+        -:   21:	}
+    24146:   22:	uberzahl b = PRIME;
+    24146:   23:	uberzahl  s("1");
+    24146:   24:	uberzahl ss("0");
+    24146:   25:	uberzahl  t("0");
+    24146:   26:	uberzahl tt("1");
+    24146:   27:	uberzahl q;
+    24146:   28:	uberzahl temp;
+  3658737:   29:	while(b != "0")
+        -:   30:	{
+  1823332:   31:		q = a / b;
+        -:   32:
+  1823332:   33:		temp = a;
+  1823332:   34:		a = b;
+  1823332:   35:		b = temp % b;
+        -:   36:
+  1823332:   37:		temp = s;
+  1823332:   38:		s = ss;
+  1823332:   39:		ss = temp - ss*q;
+        -:   40:
+  1823332:   41:		temp = t;
+  1823332:   42:		t = tt;
+  1823332:   43:		tt = temp - tt*q;
+        -:   44:	}
+        -:   45:		
+    24146:   46:	return Zp(s);
+        -:   47:}
+        -:   48:
+        -:   49:
+    12094:   50:ECpoint ECpoint::operator + (const ECpoint &a) const {
+        -:   51:	// Implement  elliptic curve addition
+    12094:   52:	if(a.infinityPoint)
+        2:   53:		return *this;
+    12092:   54:	else if(this->infinityPoint)
+       33:   55:		return a;
+    24118:   56:	Zp xP = this->x;
+    24118:   57:	Zp yP = this->y;
+    24118:   58:	Zp xQ = a.x;
+    24118:   59:	Zp yQ = a.y;
+    24118:   60:	Zp m;
+        -:   61:
+    12059:   62:	if(xP == xQ && yP == yQ)
+        -:   63:	{
+     8132:   64:		if(yP == Zp(0))
+        1:   65:			return ECpoint(true);
+     8131:   66:		m = (Zp(3) * xP * xP + Zp(A) )*(Zp(2) * yP).inverse();
+        -:   67:	}
+        -:   68:	else
+        -:   69:	{
+     3927:   70:		if(xP == xQ)
+        1:   71:			return ECpoint(true);
+     3926:   72:		m = (yQ - yP)*(xQ-xP).inverse();
+        -:   73:	}
+        -:   74:
+    24114:   75:	Zp xR = m*m - xQ - xP;
+    24114:   76:	Zp yR = m*(xR-xP) + yP;
+    12057:   77:	return ECpoint(xR,-yR);
+        -:   78:}
+        -:   79:
+        -:   80:
+       36:   81:ECpoint ECpoint::repeatSum(ECpoint p, uberzahl v) const {
+        -:   82:	//Find the sum of p+p+...+p (vtimes)
+       36:   83:	if(p.infinityPoint)
+        1:   84:		return p;
+       35:   85:	else if( v < "0")
+        1:   86:		return p.repeatSum(-p,-v);
+       34:   87:	else if( v == "0")
+        1:   88:		return ECpoint(true);
+        -:   89:	else
+        -:   90:	{
+       66:   91:		ECpoint r(true);
+    16295:   92:		while( v > "0" )
+        -:   93:		{
+     8131:   94:			if( (v & "1") == "1")
+     3959:   95:				r =  r+p;
+     8131:   96:			p = p+p;
+     8131:   97:			v = v >> 1;
+        -:   98:		}
+       33:   99:		return r;
+        -:  100:	}
+        -:  101:
+        -:  102:
+        -:  103:}
+        -:  104:
+       16:  105:Zp ECsystem::power(Zp val, uberzahl pow) {
+        -:  106:	//Find the product of val*val*...*val (pow times)
+       16:  107:	Zp c = Zp(1);
+     4112:  108:	while( pow > "0" )
+        -:  109:	{
+     2048:  110:		if( (pow & "1") == "1")
+     2016:  111:			c =  c*val;
+     2048:  112:		val = val*val;
+     2048:  113:		pow = pow >> 1;
+        -:  114:	}
+        -:  115:	// assert(0);
+       16:  116:	return c;
+        -:  117:}
+        -:  118:
+        -:  119:
+        8:  120:uberzahl ECsystem::pointCompress(ECpoint e) {
+        -:  121:	//It is the gamma function explained in the assignment.
+        -:  122:	//Note: Here return type is mpz_class because the function may
+        -:  123:	//map to a value greater than the defined PRIME number (i.e, range of Zp)
+        -:  124:	//This function is fully defined.
+        8:  125:	uberzahl compressedPoint = e.x.getValue();
+        8:  126:	compressedPoint = compressedPoint<<1;
+        8:  127:	if(e.infinityPoint) {
+    #####:  128:		cout<<"Point cannot be compressed as its INF-POINT"<<flush;
+    #####:  129:		abort();
+        -:  130:		}
+        -:  131:	else {
+        8:  132:		if (e.y.getValue()%2 == 1)
+        3:  133:			compressedPoint = compressedPoint + 1;
+        -:  134:		}
+        -:  135:		// cout<<"For point  "<<e<<"  Compressed point is "<<compressedPoint<<"\n";
+        8:  136:		return compressedPoint;
+        -:  137:
+        -:  138:}
+        -:  139:
+        8:  140:ECpoint ECsystem::pointDecompress(uberzahl compressedPoint){
+        -:  141:	//Implement the delta function for decompressing the compressed point
+        -:  142:
+       16:  143:	Zp x = compressedPoint >> 1;
+       16:  144:	Zp z = this->power(x,3) + Zp(A) * x + Zp(B);
+       16:  145:	Zp y = this->power(z,(PRIME+"1")/"4");
+        8:  146:	if( (y.getValue() % 2) != (compressedPoint % 2) )
+        5:  147:		y = Zp(PRIME)-y;
+       16:  148:	return ECpoint(x,y);
+        -:  149:}
+        -:  150:
+        -:  151:
+        8:  152:pair<pair<Zp,Zp>,uberzahl> ECsystem::encrypt(ECpoint publicKey, uberzahl privateKey,Zp plaintext0,Zp plaintext1){
+        -:  153:	// You must implement elliptic curve encryption
+        -:  154:	//  Do not generate a random key. Use the private key that is passed from the main function
+       16:  155:	ECpoint Q = privateKey * G;
+       16:  156:	ECpoint key = privateKey * this->publicKey;
+       16:  157:	Zp ciphertext0 = plaintext0 * key.x;
+       16:  158:	Zp ciphertext1 = plaintext1 * key.y;
+       16:  159:	uberzahl ciphertext2 = this->pointCompress(Q);
+        -:  160:
+       16:  161:	return make_pair(make_pair(ciphertext0,ciphertext1),ciphertext2);
+        -:  162:}
+        -:  163:
+        -:  164:
+        8:  165:pair<Zp,Zp> ECsystem::decrypt(pair<pair<Zp,Zp>, uberzahl> ciphertext){
+        -:  166:	// Implement EC Decryption
+        -:  167:
+       16:  168:	ECpoint R = this->privateKey * this->pointDecompress(ciphertext.second);
+       16:  169:	Zp plaintext0 = ciphertext.first.first * R.x.inverse();
+       16:  170:	Zp plaintext1 = ciphertext.first.second * R.y.inverse();
+       16:  171:	return make_pair(plaintext0,plaintext1);
+        -:  172:}
+        -:  173:
+        -:  174:
+        -:  175:/*
+        -:  176: * main: Compute a pair of public key and private key
+        -:  177: *       Generate plaintext (m1, m2)
+        -:  178: *       Encrypt plaintext using elliptic curve encryption
+        -:  179: *       Decrypt ciphertext using elliptic curve decryption
+        -:  180: *       Should get the original plaintext
+        -:  181: *       Don't change anything in main.  We will use this to
+        -:  182: *       evaluate the correctness of your program.
+        -:  183: */
+        -:  184:
+        8:  185:void run(uberzahl messagePart1, uberzahl& messagePart2, unsigned long incrementVal)
+        -:  186:{
+        -:  187:	clock_t begin, end;
+        -:  188:	double time_spent;
+        -:  189:
+        8:  190:	begin = clock();
+        -:  191:
+       16:  192:	ECsystem ec;
+        -:  193:
+       16:  194:	pair <ECpoint, uberzahl> keys = ec.generateKeys();
+        -:  195:	
+       16:  196:	Zp plaintext0(/*MESSAGE0*/messagePart1);
+       16:  197:	Zp plaintext1(/*MESSAGE1*/messagePart2);
+       16:  198:	ECpoint publicKey = keys.first;
+        8:  199:	cout<<"Public key is: "<<publicKey<<"\n";
+        -:  200:	
+        8:  201:	cout<<"Enter offset value for sender's private key"<<endl;
+        -:  202:
+       16:  203:	uberzahl privateKey = XB + incrementVal;
+        -:  204:	
+       16:  205:	pair<pair<Zp,Zp>, uberzahl> ciphertext = ec.encrypt(publicKey, privateKey, plaintext0,plaintext1);
+        8:  206:	cout<<"Encrypted ciphertext is: ("<<ciphertext.first.first<<", "<<ciphertext.first.second<<", "<<ciphertext.second<<")\n";
+       16:  207:	pair<Zp,Zp> plaintext_out = ec.decrypt(ciphertext);
+        -:  208:	
+        8:  209:	cout << "Original plaintext is: (" << plaintext0 << ", " << plaintext1 << ")\n";
+        8:  210:	cout << "Decrypted plaintext: (" << plaintext_out.first << ", " << plaintext_out.second << ")\n";
+        -:  211:
+        -:  212:
+        8:  213:	if(plaintext0 == plaintext_out.first && plaintext1 == plaintext_out.second)
+        8:  214:		cout << "Correct!" << endl;
+        -:  215:	else
+    #####:  216:		cout << "Plaintext different from original plaintext." << endl;
+        -:  217:	
+        8:  218:	end = clock();
+        8:  219:	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+        8:  220:	cout << "\nTIME :" << time_spent << "seconds" << endl;
+        8:  221:}
+        -:  222:
+        1:  223:int main(void) {
+        -:  224:
+        -:  225:  //run with large parts of message.
+        -:  226:  {
+        2:  227:    uberzahl part1 = "5192194303766841028825845";
+        2:  228:    uberzahl part2 = "5325995014746560938717301";
+        1:  229:    run(part1, part2, 3);
+        -:  230:  }
+        -:  231:
+        -:  232:  //run with small message part one, large part two.
+        -:  233:  {
+        2:  234:    uberzahl part1 = "5";
+        2:  235:    uberzahl part2 = "5325995014746560938717301";
+        1:  236:    run(part1, part2, 34);
+        -:  237:  }
+        -:  238:
+        -:  239:  //run with large message part one, small part two.
+        -:  240:  {
+        2:  241:    uberzahl part1 = "8324573705019449783825930518";
+        2:  242:    uberzahl part2 = "1";
+        1:  243:    run(part1, part2, 5);
+        -:  244:  }
+        -:  245:
+        -:  246:  //run with small parts of message.
+        -:  247:  {
+        2:  248:    uberzahl part1 = "3";
+        2:  249:    uberzahl part2 = "2";
+        1:  250:    run(part1, part2, 75);
+        -:  251:  }
+        -:  252:
+        -:  253:  //run with negative part 1.
+        -:  254:  {
+        2:  255:    uberzahl part1 = "-45364847";
+        2:  256:    uberzahl part2 = "99879283";
+        1:  257:    run(part1, part2, 9);
+        -:  258:  }
+        -:  259:
+        -:  260:  //run with negative part 2.
+        -:  261:  {
+        2:  262:    uberzahl part1 = "1897490";
+        2:  263:    uberzahl part2 = "-94874373";
+        1:  264:    run(part1, part2, 2);
+        -:  265:  }
+        -:  266:
+        -:  267:  //both parts negative.
+        -:  268:  {
+        2:  269:    uberzahl part1 = "-8372526374";
+        2:  270:    uberzahl part2 = "-2439723";
+        1:  271:    run(part1, part2, 9);
+        -:  272:  }
+        -:  273:
+        -:  274:  //run with negative offset.
+        -:  275:  {
+        2:  276:    uberzahl part1 = "45364847";
+        2:  277:    uberzahl part2 = "99879283";
+        1:  278:    run(part1, part2, -9);
+        -:  279:  }
+        -:  280:
+        -:  281:  // Addition/subtraction.
+        -:  282:  {
+        2:  283:    Zp x1 = 49;
+        2:  284:    Zp x2 = 50;
+        2:  285:    Zp y1 = 234532910;
+        2:  286:    Zp y2 = 3847762;
+        -:  287:    
+        2:  288:    ECpoint point1(x1, y1);
+        2:  289:    ECpoint point2(point1 + (-point1));
+        1:  290:    cout << point1 << endl;
+        1:  291:    cout << point1 + (-point2) << endl;
+        1:  292:    cout << point1 - point2 << endl;
+        -:  293:  }
+        -:  294:
+        -:  295:  // Same points.
+        -:  296:  {
+        2:  297:    ECpoint point1(38470, 0);
+        2:  298:    ECpoint point2(38470, 0);
+        1:  299:    cout << point1 + point2 << endl;
+        -:  300:  }
+        -:  301:
+        -:  302:  // Repeat sum.
+        -:  303:  {
+        2:  304:    ECpoint point1(true);
+        2:  305:    ECpoint point2(847,4943);
+        2:  306:    uberzahl power1("0");
+        2:  307:    uberzahl power2("-4");
+        -:  308:
+        1:  309:    cout << point1.repeatSum(point1, power1) << endl;
+        1:  310:    cout << point1.repeatSum(point2, power2) << endl;
+        1:  311:    cout << point1.repeatSum(point2, power1) << endl;
+        -:  312:  }
+        -:  313:  
+        1:  314:  return 0;
+        -:  315:}
+        -:  316:
+        1:  317:ECpoint operator - (const ECpoint &a, const ECpoint &b)
+        -:  318:{
+        1:  319:	return a + (-b);
+        -:  320:}
+        4:  321:ECpoint operator - (const ECpoint &a)
+        -:  322:{
+        4:  323:	if(a.infinityPoint)
+        -:  324:	{
+        2:  325:		return a;
+        -:  326:	}
+        2:  327:	return ECpoint(a.x,-a.y);
+        -:  328:
+        3:  329:}

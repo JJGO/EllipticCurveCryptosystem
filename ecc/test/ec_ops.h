@@ -24,10 +24,12 @@ using namespace std;
 
 
 
-const uberzahl PRIME(PRIME_STR);
-const uberzahl ORDER(ORDER_STR);
-const uberzahl A(A_STR);
-const uberzahl B(B_STR,16);
+// const uberzahl PRIME(PRIME_STR);
+// const uberzahl ORDER(ORDER_STR);
+const uberzahl PRIME("599");
+const uberzahl ORDER("579");
+const uberzahl A("-3");
+const uberzahl B("1");
 const uberzahl GX(GX_STR,16);
 const uberzahl GY(GY_STR,16);
 const uberzahl MESSAGE0(MESSAGE0_STR);
@@ -48,15 +50,15 @@ class Zp{
 	
 	public:
 	Zp(){}
-	Zp(const uberzahl v){ 
-		value = v; 
+	Zp(const uberzahl v){
+		value = v;
 		if(value >= PRIME || value < "0")
-			value = value % PRIME; 
+			value = value % PRIME;
 	}
-	Zp(const int v){ 
-		value = v; 
+	Zp(const int v){
+		value = v;
 		if(value>=PRIME || value < "0")
-			value = value % PRIME; 
+			value = value % PRIME;
 	}
 	uberzahl getValue() const { return value; }
 
@@ -69,7 +71,7 @@ class Zp{
 };
 
 
-/* 
+/*
  * class ECpoint: A point on an elliptic curve
  */
 class ECpoint{
@@ -102,19 +104,22 @@ class ECsystem{
 		uberzahl privateKey;
 		ECpoint publicKey;
 		ECpoint G; //Generator G
-		Zp power(Zp base, uberzahl pow);
+	public:
 		uberzahl pointCompress(ECpoint e);
 		ECpoint pointDecompress(uberzahl compressedPoint);
-	public:
 
+		Zp power(Zp base, uberzahl pow);
 		ECsystem(){ G = ECpoint(GX, GY);}
 		ECpoint getPublicKey(){ return publicKey;}
 		
-		pair <ECpoint, uberzahl> generateKeys();		
+		pair <ECpoint, uberzahl> generateKeys();
 
 		
 		pair <pair<Zp,Zp>,uberzahl> encrypt(ECpoint publicKey, uberzahl privateKey, Zp plaintext0, Zp plaintext1);
 		pair <Zp,Zp> decrypt(pair<pair<Zp,Zp>,uberzahl> cm);
+
+		// uberzahl public_pointCompress(ECpoint e) {return public_pointCompress(e); };
+		// ECpoint public_pointDecompress(uberzahl compressedPoint) {return public_pointDecompress(compressedPoint); };
 };
 
 #endif
