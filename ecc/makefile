@@ -8,8 +8,12 @@ CC = g++-5.2.0
 default:
 	${CC} ec.cpp ec_ops.cpp uberzahl.cpp -o ${SRC}
 run:
-	${CC} ec.cpp ec_ops.cpp uberzahl.cpp -o ${SRC}
+	# ${CC} ec.cpp ec_ops.cpp uberzahl.cpp -o ${SRC}
 	./${SRC}
+
+test:
+	./test.sh
+
 clean:
 	rm ${SRC}
 	rm *.gcov

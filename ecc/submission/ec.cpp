@@ -177,59 +177,6 @@ pair<Zp,Zp> ECsystem::decrypt(pair<pair<Zp,Zp>, uberzahl> ciphertext){
 }
 
 
-/*
- * main: Compute a pair of public key and private key
- *       Generate plaintext (m1, m2)
- *       Encrypt plaintext using elliptic curve encryption
- *       Decrypt ciphertext using elliptic curve decryption
- *       Should get the original plaintext
- *       Don't change anything in main.  We will use this to
- *       evaluate the correctness of your program.
- */
-
-
-int main(void)
-{
-	clock_t begin, end;
-	double time_spent;
-
-	begin = clock();
-
-	ECsystem ec;
-	unsigned long incrementVal;
-	pair <ECpoint, uberzahl> keys = ec.generateKeys();
-	
-	Zp plaintext0(MESSAGE0);
-	Zp plaintext1(MESSAGE1);
-	ECpoint publicKey = keys.first;
-	cout<<"Public key is: "<<publicKey<<"\n";
-	
-	cout<<"Enter offset value for sender's private key"<<endl;
-	cin>>incrementVal;
-	uberzahl privateKey = XB + incrementVal;
-	
-	pair<pair<Zp,Zp>, uberzahl> ciphertext = ec.encrypt(publicKey, privateKey, plaintext0,plaintext1);
-	cout<<"Encrypted ciphertext is: ("<<ciphertext.first.first<<", "<<ciphertext.first.second<<", "<<ciphertext.second<<")\n";
-	pair<Zp,Zp> plaintext_out = ec.decrypt(ciphertext);
-	
-	cout << "Original plaintext is: (" << plaintext0 << ", " << plaintext1 << ")\n";
-	cout << "Decrypted plaintext: (" << plaintext_out.first << ", " << plaintext_out.second << ")\n";
-
-
-	if(plaintext0 == plaintext_out.first && plaintext1 == plaintext_out.second)
-		cout << "Correct!" << endl;
-	else
-		cout << "Plaintext different from original plaintext." << endl;
-	
-	end = clock();
-	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-	cout << "\nTIME :" << time_spent << " seconds" << endl;
-
-	return 0;
-
-}
-
-
 ECpoint operator - (const ECpoint &a, const ECpoint &b)
 {
 	return a + (-b);
